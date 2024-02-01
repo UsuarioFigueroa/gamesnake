@@ -12,10 +12,10 @@ pantalla = pygame.display.set_mode((ANCHO, ALTO))
 pygame.display.set_caption("Juego de la Serpiente")
 
 # Colores
-COLOR_FONDO = (30, 30, 30)
+COLOR_FONDO = (20, 20, 20)  
 COLOR_TITULO = (255, 255, 255)
-COLOR_SERPIENTE = (0, 255, 0)
-COLOR_COMIDA = (255, 0, 0)
+COLOR_SERPIENTE = (0, 200, 0)  
+COLOR_COMIDA = (255, 0, 0)  
 
 # Direcciones
 ARRIBA = (0, -1)
@@ -60,7 +60,7 @@ class Serpiente:
 class Comida:
     def __init__(self):
         self.posicion = (0, 0)
-        self.puntos = 100  # Puntos por cada comida
+        self.puntos = 100  
         self.generar_comida()
 
     def generar_comida(self):
@@ -72,12 +72,15 @@ class Comida:
 
 # Función para mostrar el mensaje
 def mostrar_mensaje(mensaje, tamano_fuente=36, duracion=2):
-    fuente = pygame.font.Font(None, tamano_fuente)
-    texto = fuente.render(mensaje, True, COLOR_TITULO)
-    rectangulo_texto = texto.get_rect(center=(ANCHO // 2, ALTO // 2 - tamano_fuente // 2))
-    pantalla.blit(texto, rectangulo_texto)
-    pygame.display.flip()
-    time.sleep(duracion)
+    if tamano_fuente > 0:  
+        pantalla.fill(COLOR_FONDO)  
+
+        fuente = pygame.font.Font(None, tamano_fuente)
+        texto = fuente.render(mensaje, True, COLOR_TITULO)
+        rectangulo_texto = texto.get_rect(center=(ANCHO // 2, ALTO // 2 - tamano_fuente // 2))
+        pantalla.blit(texto, rectangulo_texto)
+        pygame.display.flip()
+        time.sleep(duracion)
 
 # Función para mostrar las instrucciones
 def mostrar_instrucciones():
@@ -91,7 +94,7 @@ def mostrar_instrucciones():
         "¡Buena suerte!",
     ]
 
-    pantalla.fill(COLOR_FONDO)
+    pantalla.fill(COLOR_FONDO)  
     fuente = pygame.font.Font(None, 25)
 
     for i, linea in enumerate(instrucciones):
@@ -115,7 +118,7 @@ def mostrar_menu():
     opcion_seleccionada = 0
 
     while True:
-        pantalla.fill(COLOR_FONDO)
+        pantalla.fill(COLOR_FONDO)  
         fuente = pygame.font.Font(None, 36)
 
         for i, opcion in enumerate(opciones):
@@ -139,77 +142,74 @@ def mostrar_menu():
 
 # Función principal del juego
 def main():
-    mostrar_mensaje("SNAKE GAME", 72, 1)  # Título más grande con efecto
-    time.sleep(0.5)  # Pequeña pausa antes de mostrar el menú
+    fondo = pygame.image.load(r"C:\Users\54260\Desktop\Juego\original.jpg")  # Reemplazar con la ruta completa de tu imagen
+    fondo = pygame.transform.scale(fondo, (ANCHO, ALTO))
 
-    while True:
-        opcion = mostrar_menu()
+    mostrar_mensaje("SNAKE GAME", 0)  
+    pantalla.blit(fondo, (0, 0))  # Mostrar la imagen de fondo al inicio
+    pygame.display.flip()
+    time.sleep(2)  # Pausa antes de mostrar el menú
 
-        if opcion == 1:  # Jugar
-            break
-        elif opcion == 2:  # Instrucciones
-            mostrar_instrucciones()
-        elif opcion == 3:  # Salir
-            pygame.quit()
-            sys.exit()
+    opcion = mostrar_menu()
 
-    serpiente = Serpiente()
-    comida = Comida()
-    puntuacion = 0  # Puntuación inicial
+    if opcion == 1:
+        # Si elige "Jugar", continuamos sin la imagen de fondo
+        serpiente = Serpiente()
+        comida = Comida()
+        puntuacion = 0
 
-    reloj = pygame.time.Clock()
+        reloj = pygame.time.Clock()
 
-    while True:
-        for evento in pygame.event.get():
-            if evento.type == pygame.QUIT:
+        while True:
+            for evento in pygame.event.get():
+                if evento.type == pygame.QUIT:
+                    pygame.quit()
+                    sys.exit()
+                elif evento.type == pygame.KEYDOWN:
+                    if evento.key == pygame.K_ESCAPE:
+                        return  # Regresar al menú
+
+                    if evento.key == pygame.K_UP and serpiente.direccion != ABAJO:
+                        serpiente.direccion = ARRIBA
+                    elif evento.key == pygame.K_DOWN and serpiente.direccion != ARRIBA:
+                        serpiente.direccion = ABAJO
+                    elif evento.key == pygame.K_LEFT and serpiente.direccion != DERECHA:
+                        serpiente.direccion = IZQUIERDA
+                    elif evento.key == pygame.K_RIGHT and serpiente.direccion != IZQUIERDA:
+                        serpiente.direccion = DERECHA
+
+            juego_terminado = serpiente.actualizar()
+
+            if juego_terminado:
+                time.sleep(1.5)
+                pantalla.fill(COLOR_FONDO)
+                mostrar_mensaje("GAME OVER", 62, 1)
+                mostrar_mensaje("", 24, 0.5)
+                time.sleep(0.5)
+                pantalla.fill(COLOR_FONDO)
+                texto_puntuacion = f"PUNTUACIÓN: {puntuacion}"
+                mostrar_mensaje(texto_puntuacion, 36, 1.5)
                 pygame.quit()
                 sys.exit()
-            elif evento.type == pygame.KEYDOWN:
-                if evento.key == pygame.K_ESCAPE:
-                    return  # Regresar al menú
 
-                if evento.key == pygame.K_UP and serpiente.direccion != ABAJO:
-                    serpiente.direccion = ARRIBA
-                elif evento.key == pygame.K_DOWN and serpiente.direccion != ARRIBA:
-                    serpiente.direccion = ABAJO
-                elif evento.key == pygame.K_LEFT and serpiente.direccion != DERECHA:
-                    serpiente.direccion = IZQUIERDA
-                elif evento.key == pygame.K_RIGHT and serpiente.direccion != IZQUIERDA:
-                    serpiente.direccion = DERECHA
+            if serpiente.cuerpo[0] == comida.posicion:
+                serpiente.crecer()
+                comida.generar_comida()
+                puntuacion += comida.puntos
 
-        juego_terminado = serpiente.actualizar()
+            pantalla.fill(COLOR_FONDO)
+            for segmento in serpiente.cuerpo:
+                pygame.draw.rect(pantalla, COLOR_SERPIENTE, (segmento[0], segmento[1], TAMANO_CELDA, TAMANO_CELDA), border_radius=5)
+            comida.dibujar()
 
-        if juego_terminado:
-            # Hacer una pausa antes de mostrar la puntuación
-            time.sleep(1.5)
+            pygame.display.flip()
 
-            pantalla.fill(COLOR_FONDO)  # Limpiar la pantalla antes de mostrar el mensaje de puntuación
-            mostrar_mensaje("GAME OVER", 62, 1)
-            mostrar_mensaje("", 24, 0.5)  # Espacio en blanco para separar los mensajes
-
-            # Hacer una pausa adicional antes de mostrar la puntuación
-            time.sleep(0.5)
-
-            pantalla.fill(COLOR_FONDO)  # Limpiar la pantalla antes de mostrar el mensaje de puntuación
-            texto_puntuacion = f"PUNTUACIÓN: {puntuacion}"
-            mostrar_mensaje(texto_puntuacion, 36, 1.5)  # Se ha aumentado el tiempo de visualización de la puntuación
-            pygame.quit()
-            sys.exit()
-
-        if serpiente.cuerpo[0] == comida.posicion:
-            serpiente.crecer()
-            comida.generar_comida()
-            puntuacion += comida.puntos  # Añadir puntos por cada comida
-
-        # Dibujar en la pantalla
-        pantalla.fill(COLOR_FONDO)
-        for segmento in serpiente.cuerpo:
-            pygame.draw.rect(pantalla, COLOR_SERPIENTE, (segmento[0], segmento[1], TAMANO_CELDA, TAMANO_CELDA))
-        comida.dibujar()
-
-        pygame.display.flip()
-
-        reloj.tick(10)  # Puedes ajustar la velocidad del juego aquí
+            reloj.tick(10)
+    elif opcion == 2:
+        mostrar_instrucciones()
+    elif opcion == 3:
+        pygame.quit()
+        sys.exit()
 
 # Iniciar el juego
 main()
